@@ -8,6 +8,8 @@
 #include <unistd.h>
 #include <fstream>
 #include <sstream>
+#include <sys/wait.h>
+#include <fcntl.h>
 
 Atendimento::Atendimento(unsigned int mesa, unsigned int chefId) {
 	if(pipe(fd) < 0) {
@@ -21,9 +23,12 @@ Atendimento::Atendimento(unsigned int mesa, unsigned int chefId) {
         perror("Fork erro");
         exit(EXIT_FAILURE);
     }
-    
+
     if(pid == 0) {
         close(fd[1]);
+        for(int i = 3; i < 1024; i++) {
+            if (i != fd[0]) close(i);
+        }
         iniciar(mesa, chefId);
         exit(0);
     }
@@ -60,7 +65,7 @@ void Atendimento::iniciar(unsigned int mesa, unsigned int chefId){
 Atendimento::~Atendimento(){
     if(pid>0){
         close(fd[1]);
-		kill(pid, SIGKILL);
+        waitpid(pid, NULL, 0);
     } else {
         close(fd[0]);
     }
@@ -91,10 +96,12 @@ void Chef::prepararPedido(const std::string &pedido, unsigned int mesa) {
 
 
 void Restaurante::tirarMesaDeAtendimento(const int &mesa) {
-    Chef* chef = mapaChefsAtendendo[mesa];
-    chef->encerrarAtendimento();
-    mapaChefsAtendendo.erase(mesa);
-    filaChefsLivres.push(chef);
+    if (mapaChefsAtendendo.contains(mesa)){
+        Chef* chef = mapaChefsAtendendo[mesa];
+        chef->encerrarAtendimento();
+        mapaChefsAtendendo.erase(mesa);
+        filaChefsLivres.push(chef);
+    }
 }
 
 void Restaurante::adicionarMesaParaAtendimento(const int &mesa, const std::string pedido){
@@ -102,11 +109,10 @@ void Restaurante::adicionarMesaParaAtendimento(const int &mesa, const std::strin
         Chef* chef = filaChefsLivres.front();
         filaChefsLivres.pop();
         mapaChefsAtendendo[mesa] = chef;
-        chef->iniciarAtendimento(mesa);
         processar(pedido, mesa);
     } else {
-        filaMesasAguardando.push(mesa);
         if (!mapaDePedidoAguardando.contains(mesa)){
+            filaMesasAguardando.push(mesa);
             mapaDePedidoAguardando[mesa] = std::queue<std::string>();
         }
         mapaDePedidoAguardando[mesa].push(pedido);
@@ -124,8 +130,11 @@ void Restaurante::consumirPedidosAguardando(){
             mapaDePedidoAguardando[mesa].pop();
             i++;
             if (i==1){
-                adicionarMesaParaAtendimento(mesa, pedido);
-                if (pedido != "fim") continue;
+                if (pedido != "fim") {
+                    adicionarMesaParaAtendimento(mesa, pedido);
+                    continue;
+                }
+                
             } 
             
             if (pedido == "fim") {
