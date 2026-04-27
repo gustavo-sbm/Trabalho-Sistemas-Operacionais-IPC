@@ -30,7 +30,5 @@ int main() {
 
     r.iniciar(qtdMesas);
 
-
-
     return EXIT_SUCCESS;
 }
