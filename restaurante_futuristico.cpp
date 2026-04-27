@@ -60,6 +60,7 @@ void Atendimento::iniciar(unsigned int mesa, unsigned int chefId){
 Atendimento::~Atendimento(){
     if(pid>0){
         close(fd[1]);
+		kill(pid, SIGKILL);
     } else {
         close(fd[0]);
     }
