@@ -4,7 +4,6 @@
 #include "restaurante_futuristico.hpp"
 
 int main() {
-    signal(SIGCHLD, SIG_IGN);
     Restaurante r;
     int qtdChefs;
     int qtdMesas;
@@ -29,6 +28,8 @@ int main() {
     }
 
     r.iniciar(qtdMesas);
+
+
 
     return EXIT_SUCCESS;
 }
