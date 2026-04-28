@@ -9,7 +9,7 @@
 #include <fstream>
 #include <sstream>
 #include <sys/wait.h>
-#include <fcntl.h>
+#include <cstring>
 
 Atendimento::Atendimento(unsigned int mesa, unsigned int chefId) {
 	if(pipe(fd) < 0) {
@@ -26,11 +26,7 @@ Atendimento::Atendimento(unsigned int mesa, unsigned int chefId) {
 
     if(pid == 0) {
         close(fd[1]);
-        for(int i = 3; i < 1024; i++) {
-            if (i != fd[0]) close(i);
-        }
         iniciar(mesa, chefId);
-        exit(0);
     }
     
     if(pid>0){
@@ -39,8 +35,8 @@ Atendimento::Atendimento(unsigned int mesa, unsigned int chefId) {
 }
 
 void Atendimento::prepararPedido(const std::string &pedido) const{
-    std::string pedidoFormatado = "  -" + pedido + "\n";
-    write(fd[1], pedidoFormatado.c_str(), pedidoFormatado.size());
+    
+    write(fd[1], pedido.c_str(), pedido.size());
 }
 
 void Atendimento::iniciar(unsigned int mesa, unsigned int chefId){
@@ -56,16 +52,26 @@ void Atendimento::iniciar(unsigned int mesa, unsigned int chefId){
         if (n<=0) break;
         
         buffer[n]='\0';
-        
-        arquivo << buffer;
+
+        char *token = strtok(buffer, "\n");
+        while (token != NULL){
+            if(strncmp(token, "fim", 3) == 0){ 
+                arquivo.flush();
+                _exit(0);}
+            arquivo << " -  " << token << "\n";
+            token = strtok(NULL, "\n");
+        }
         arquivo.flush();
     }
 }
 
 Atendimento::~Atendimento(){
     if(pid>0){
+       
+        prepararPedido("fim");
         close(fd[1]);
-        waitpid(pid, NULL, 0);
+        
+
     } else {
         close(fd[0]);
     }
@@ -82,7 +88,7 @@ void Chef::iniciarAtendimento(unsigned int mesa){
 }
 
 void Chef::encerrarAtendimento() {
-    delete atendimento;
+    delete atendimento; 
     atendimento = nullptr;
 }
 
@@ -156,7 +162,8 @@ void Restaurante::adicionarChef(unsigned int &id){
 }
 
 void Restaurante::processar(const std::string& pedido, const int &mesa) {
-    mapaChefsAtendendo[mesa]->prepararPedido(pedido, mesa);
+    std::string pedidoFormatado = pedido + "\n";
+    mapaChefsAtendendo[mesa]->prepararPedido(pedidoFormatado, mesa);
 }
 
 void Restaurante::iniciar(int qtdMesaRestaurante){
@@ -172,6 +179,8 @@ void Restaurante::iniciar(int qtdMesaRestaurante){
         iss >> mesa;
         iss.ignore();
         std::getline(iss, pedido);
+
+        
 
         if (mesa < 0 || mesa > qtdMesaRestaurante) {
             std::cout << "MESA NÃO EXISTE";
