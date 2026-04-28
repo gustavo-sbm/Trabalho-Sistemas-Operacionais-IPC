@@ -1,9 +1,11 @@
+#include <csignal>
 #include <cstdlib>
 #include <iostream>
 #include <signal.h>
 #include "restaurante_futuristico.hpp"
 
 int main() {
+    signal(SIGCHLD, SIG_IGN);
     Restaurante r;
     int qtdChefs;
     int qtdMesas;
