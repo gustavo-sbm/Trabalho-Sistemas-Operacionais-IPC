@@ -2,34 +2,34 @@
 #include <cstdlib>
 #include <iostream>
 #include <signal.h>
-#include "restaurante_futuristico.hpp"
+#include "fabrica.hpp"
 
 int main() {
-    signal(SIGCHLD, SIG_IGN);
-    Restaurante r;
-    int qtdChefs;
-    int qtdMesas;
-    std::cin >> qtdChefs;
+
+    Fabrica f;
+    int qtdBots;
+    int qtdVeiculos;
+    std::cin >> qtdBots;
     std::cin.ignore();
-    std::cin >> qtdMesas;
+    std::cin >> qtdVeiculos;
     std::cin.ignore();
 
-    if (qtdChefs < 1 || qtdChefs > 100 ){
-        std::cout << "QUANTIDADE DE CHEFS INVALIDA";
+    if (qtdBots < 1 || qtdBots > 100 ){
+        std::cout << "QUANTIDADE DE BOTS INVALIDA";
         return EXIT_FAILURE;
     }
 
-    if (qtdMesas < qtdChefs || qtdMesas > qtdChefs*4){
-        std::cout << "QUANTIDADE DE MESAS INVALIDAS";
+    if (qtdVeiculos < qtdBots || qtdVeiculos > qtdBots*4){
+        std::cout << "QUANTIDADE DE VEICULOS INVALIDOS";
         return EXIT_FAILURE;
     }
 
-    for (int i = 0; i < qtdChefs; i++){
+    for (int i = 0; i < qtdBots; i++){
         unsigned int id = i+1;
-        r.adicionarChef(id);
+        f.adicionarBot(id);
     }
 
-    r.iniciar(qtdMesas);
+    f.iniciar(qtdVeiculos);
 
 
 
